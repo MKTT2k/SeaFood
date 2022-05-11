@@ -71,8 +71,7 @@ namespace Customers.Controllers
 
         public ActionResult Register()
         {
-            var obj = new CustomerViewModel();
-            return View(obj);
+            return View();
         }
 
         [HttpPost]

@@ -4,6 +4,8 @@
             cart.regisControl();
         },
         regisControl: function () {
+            const me = this;
+
             $('.btn-update').off('click').on('click', function (e) {
                 e.preventDefault();
                 var btn = $(this);
@@ -19,6 +21,12 @@
                 var btn = $(this);
                 var productId = btn.data("productid");
                 cart.deleteItem(productId);
+            });
+
+            $('.btn-checkout').off('click').on('click', function (e) {
+                debugger
+                e.preventDefault();
+                me.checkOut();
             });
         },
         updateQuantity: function (productId,quantity) {
@@ -65,6 +73,27 @@
                         $('#content').html(res.html);
                         base.setNumberItemInCart(res.totalRow);
                         cart.regisControl();
+                    }
+                }
+            });
+        },
+        checkOut: function () {
+            $.ajax({
+                url: '/Cart/validateQuantity',
+                type: 'post',
+                success: function (res) {
+                    if (res.status > 0) {
+                        location.href = '/CheckOut/Step1';
+                    }
+                    else {
+                        var html = '';
+                        $.each(res.data, function (i, item) {
+                            if (item.OutofQuantity) {
+                                html += '<li>' + item.productName + ' vượt quá số lượng trong kho</li>'
+                            }
+                        });
+
+                        $('.validate-summary').html(html);
                     }
                 }
             });
