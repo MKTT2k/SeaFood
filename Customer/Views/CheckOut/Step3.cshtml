@@ -115,9 +115,9 @@
                                 var buyerInfo = res.ssAddress.FullName + '*|*' + res.ssAddress.Email + '*|*' + res.ssAddress.PhoneNo + '*|*' + res.ssAddress.Address;
 
                                 var urlNganLuong = 'https://sandbox.nganluong.vn:8088/nl35/checkout.php';
-                                urlNganLuong += '?merchant_site_code=49840';
+                                urlNganLuong += '?merchant_site_code=51457';
                                 urlNganLuong += '&return_url=' + location.origin + '/CheckOut/PaymentSuccess';
-                                urlNganLuong += '&receiver=haubv95@gmail.com';
+                                urlNganLuong += '&receiver=makettuthan@gmail.com';
                                 urlNganLuong += '&transaction_info=' + res.email;
                                 urlNganLuong += '&order_code=' + res.orderId;
                                 urlNganLuong += '&price=' + totalPrice;
@@ -129,9 +129,9 @@
                                 urlNganLuong += '&fee_shipping=0';
                                 urlNganLuong += '&buyer_info=' + buyerInfo;
                                 urlNganLuong += '&lang=vi';
-                                urlNganLuong += '&secure_code=' + CryptoJS.MD5('49840' + ' '
+                                urlNganLuong += '&secure_code=' + CryptoJS.MD5('51457' + ' '
                                                                                 +  location.origin +'/CheckOut/PaymentSuccess' + ' '
-                                                                                + 'haubv95@gmail.com' + ' '
+                                                                                + 'makettuthan@gmail.com' + ' '
                                                                                 + res.email + ' '
                                                                                 + res.orderId + ' '
                                                                                 + totalPrice + ' '
@@ -144,7 +144,7 @@
                                                                                 + '' + ' '
                                                                                 + buyerInfo + ' '
                                                                                 + '' + ' '
-                                                                                + 'a80f55d4eabbaf5666d53418dc7058c3'
+                                                                                + 'eb834023663f60862040d632a2bf2530'
                                                                                 );
                                 urlNganLuong += '&cancel_url=' + encodeURIComponent(location.origin + '/CheckOut/ViewOrder?orderId=' + res.orderId + '&email=' + res.email);
                                 setTimeout(function () { location.href = urlNganLuong; }, 3000);

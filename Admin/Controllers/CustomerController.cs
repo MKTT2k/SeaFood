@@ -99,7 +99,7 @@ namespace Admin.Controllers
                     
                 uow.Commit();
                 TempData["Result"] = "Cập nhật thành công.";
-                return RedirectToAction("Index", "Category");
+                return RedirectToAction("Index", "Customer");
                
             }
         }

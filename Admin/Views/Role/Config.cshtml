@@ -230,6 +230,7 @@
                     success: function (res) {
                         if (res.status) {
                             toastr["success"]("Cập nhật thành công.");
+                            setTimeout(function () { location.href = '/Role'; }, 2500);
                         }
                         else {
                             toastr["error"]("Có lỗi xảy ra, vui lòng thử lại.");

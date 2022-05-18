@@ -35,40 +35,51 @@ namespace Services.Apriori
 
         public Output ProcessTransaction(double minSupport, double minConfidence, IEnumerable<string> items, string[] transactions)
         {
-            Dictionary<string, object> allProcess = new Dictionary<string, object>();
-            IList<Item> frequentItems = GetL1FrequentItems(minSupport, items, transactions);
-            allProcess.Add("L1", frequentItems);
-
-            ItemsDictionary allFrequentItems = new ItemsDictionary();
-            allFrequentItems.ConcatItems(frequentItems);
-            IDictionary<string, double> candidates;
-            double transactionsCount = transactions.Count();
-
-            int step = 2;
-            do
+            try
             {
-                candidates = GenerateCandidates(frequentItems, transactions);
-                allProcess.Add($"C{step}", candidates);
-                frequentItems = GetFrequentItems(candidates, minSupport, transactionsCount);
-                allProcess.Add($"L{step}", frequentItems);
+                Dictionary<string, object> allProcess = new Dictionary<string, object>();
+                IList<Item> frequentItems = GetL1FrequentItems(minSupport, items, transactions);
+                allProcess.Add("L1", frequentItems);
+
+                ItemsDictionary allFrequentItems = new ItemsDictionary();
                 allFrequentItems.ConcatItems(frequentItems);
-                step += 1;
+                IDictionary<string, double> candidates;
+                double transactionsCount = transactions.Count();
+
+                int step = 2;
+                do
+                {
+                    candidates = GenerateCandidates(frequentItems, transactions);
+                    allProcess.Add($"C{step}", candidates);
+                    frequentItems = GetFrequentItems(candidates, minSupport, transactionsCount);
+                    allProcess.Add($"L{step}", frequentItems);
+                    allFrequentItems.ConcatItems(frequentItems);
+                    step += 1;
+                }
+                while (candidates.Count != 0);
+
+                HashSet<Rule> rules = GenerateRules(allFrequentItems);
+                IList<Rule> strongRules = GetStrongRules(minConfidence, rules, allFrequentItems);
+                Dictionary<string, Dictionary<string, double>> closedItemSets = GetClosedItemSets(allFrequentItems);
+                IList<string> maximalItemSets = GetMaximalItemSets(closedItemSets);
+
+                return new Output
+                {
+                    StrongRules = strongRules,
+                    MaximalItemSets = maximalItemSets,
+                    ClosedItemSets = closedItemSets,
+                    FrequentItems = allFrequentItems,
+                    AllProcess = allProcess
+                };
             }
-            while (candidates.Count != 0);
-
-            HashSet<Rule> rules = GenerateRules(allFrequentItems);
-            IList<Rule> strongRules = GetStrongRules(minConfidence, rules, allFrequentItems);
-            Dictionary<string, Dictionary<string, double>> closedItemSets = GetClosedItemSets(allFrequentItems);
-            IList<string> maximalItemSets = GetMaximalItemSets(closedItemSets);
-
-            return new Output
+            catch (Exception ex)
             {
-                StrongRules = strongRules,
-                MaximalItemSets = maximalItemSets,
-                ClosedItemSets = closedItemSets,
-                FrequentItems = allFrequentItems,
-                AllProcess = allProcess
-            };
+                return null;
+            }
+
+            
+
+            
         }
 
         public List<string> ProcessInputRule(List<string> productIds)
@@ -144,7 +155,7 @@ namespace Services.Apriori
         private string SortCandidate(string candidate)
         {
             var array = TransformToArray(candidate);
-            Array.Sort(array);
+            Array.Sort(array, CompareItem);
             return TransformToString(array);
         }
 
@@ -198,32 +209,43 @@ namespace Services.Apriori
         private string GenerateCandidate(string firstItem, string secondItem)
         {
             string newCandidate;
-            List<string> newArray = new List<string>();
 
-            var firstArray = TransformToArray(firstItem);
-            var secondArray = TransformToArray(secondItem);
-
-            int length = firstItem.Length;
-
-            if (firstArray.Length == 1)
+            try
             {
-                newArray.AddRange(firstArray);
-                newArray.AddRange(secondArray);
-                newCandidate = TransformToString(newArray.ToArray());
-            }
-            else
-            {
-                string firstSubString = firstItem.Substring(0, length - 1);
-                string secondSubString = secondItem.Substring(0, length - 1);
+                
+                List<string> newArray = new List<string>();
 
-                if (firstSubString == secondSubString)
+                var firstArray = TransformToArray(firstItem);
+                var secondArray = TransformToArray(secondItem);
+
+                int length = firstItem.Length;
+
+                if (firstArray.Length == 1)
                 {
-                    newCandidate = firstItem + secondItem[length - 1];
-                    return newCandidate;
+                    newArray.AddRange(firstArray);
+                    newArray.AddRange(secondArray);
+                    newCandidate = TransformToString(newArray.ToArray());
                 }
+                else
+                {
+                    string firstSubString = firstItem.Substring(0, length - 1);
+                    string secondSubString = secondItem.Substring(0, Math.Min(length - 1, secondItem.Length));
 
-                newCandidate = string.Empty;
+                    if (firstSubString == secondSubString)
+                    {
+                        newCandidate = firstItem + secondItem[length - 1];
+                        return newCandidate;
+                    }
+
+                    newCandidate = string.Empty;
+                }
             }
+            catch (Exception ex)
+            {
+
+                throw;
+            }
+            
 
             return newCandidate;
         }
@@ -398,21 +420,28 @@ namespace Services.Apriori
 
         private void AddStrongRule(Rule rule, List<Rule> strongRules, double minConfidence, ItemsDictionary allFrequentItems)
         {
-            List<string> xy = new List<string>();
-            xy.AddRange(rule.X);
-            xy.AddRange(rule.Y);
-            var xyArray = xy.ToArray();
-
-            Array.Sort(rule.X);
-            Array.Sort(rule.Y);
-            Array.Sort(xyArray);
-
-            double confidence = GetConfidence(rule.X, xyArray, allFrequentItems);
-
-            if (confidence >= minConfidence)
+            try
             {
-                Rule newRule = new Rule(rule.X, rule.Y, confidence);
-                strongRules.Add(newRule);
+                List<string> xy = new List<string>();
+                xy.AddRange(rule.X);
+                xy.AddRange(rule.Y);
+                var xyArray = xy.ToArray();
+
+                Array.Sort(rule.X, CompareItem);
+                Array.Sort(rule.Y, CompareItem);
+                Array.Sort(xyArray, CompareItem);
+
+                double confidence = GetConfidence(rule.X, xyArray, allFrequentItems);
+
+                if (confidence >= minConfidence)
+                {
+                    Rule newRule = new Rule(rule.X, rule.Y, confidence);
+                    strongRules.Add(newRule);
+                }
+            }
+            catch (Exception ex)
+            {
+                throw;
             }
         }
 
@@ -423,6 +452,12 @@ namespace Services.Apriori
             return supportXY / supportX;
         }
 
+        public static int CompareItem(string s1, string s2)
+        {
+            var intS1 = int.Parse(s1);
+            var intS2 = int.Parse(s2);
+            return intS1.CompareTo(intS2);
+        }
         #endregion
     }
 }
